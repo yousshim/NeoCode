@@ -1,24 +1,9 @@
-set number
-set relativenumber
-set nowrap
-set nocompatible
-set tabstop=4
-set shiftwidth=4
-set shiftround
-set expandtab
-set termguicolors
-set noshowmode
-set laststatus=2
-set t_Co=256
-set foldmethod=expr
-set foldexpr=nvim_treesitter#foldexpr()
-set hidden
-
 " Load packager only when you need it
 function! PackagerInit() abort
     packadd vim-packager
-    call packager#init()
-    call packager#add('kristijanhusak/vim-packager', { 'type': 'opt' })
+    call packager#init({ 'default_plugin_type': 'opt' })
+    call packager#add('kristijanhusak/vim-packager')
+
     call packager#add('nvim-treesitter/nvim-treesitter')
     call packager#add('Shougo/deoplete.nvim')
     call packager#add('sirver/UltiSnips')
@@ -27,9 +12,6 @@ function! PackagerInit() abort
     call packager#add('puremourning/vimspector')
     call packager#add('airblade/vim-gitgutter')
     call packager#add('jreybert/vimagit')
-    call packager#add('junegunn/fzf', { 'do': './install --all && ln -s $(pwd) ~/.fzf'})
-    call packager#add('junegunn/fzf.vim')
-    call packager#add('romgrk/doom-one.vim')
     call packager#add('sainnhe/sonokai')
     call packager#add('itchyny/lightline.vim')
 endfunction
@@ -39,29 +21,65 @@ command! -bang PackagerUpdate call PackagerInit() | call packager#update({ 'forc
 command! PackagerClean call PackagerInit() | call packager#clean()
 command! PackagerStatus call PackagerInit() | call packager#status()
 
+function! Layer_Options()
+    set number
+    set relativenumber
+    set nowrap
+    set nocompatible
+    set tabstop=4
+    set shiftwidth=4
+    set shiftround
+    set expandtab
+    set termguicolors
+    set noshowmode
+    set laststatus=2
+    set t_Co=256
+    set foldmethod=expr
+    set foldexpr=nvim_treesitter#foldexpr()
+    set hidden
+endfunction
 
-let g:sonokai_style = 'andromeda'
-let g:sonokai_enable_italic = 1
-let g:sonokai_disable_italic_comment = 1
 
-colorscheme sonokai
+function! Layer_UI()
+    packadd nvim-treesitter
+    packadd sonokai
+    let g:sonokai_style = 'andromeda'
+    let g:sonokai_enable_italic = 1
+    let g:sonokai_disable_italic_comment = 1
+    colorscheme sonokai
+    let g:lightline = {
+        \ 'colorscheme': 'sonokai',
+        \ }
+    packadd lightline.vim
+endfunction
 
-let g:lightline = {
-      \ 'colorscheme': 'sonokai',
-      \ }
+function! Layer_Snippets()
+    packadd UltiSnips
+    packadd vim-snippets
+endfunction
 
-let g:deoplete#enable_at_startup = 1
+function! Layer_LanguageClient()
+    let g:LanguageClient_serverCommands = {
+                \'typescript': ['typescript-language-server', '--stdio']
+                \}
+    packadd LanguageClient-neovim
+endfunction
 
-let g:LanguageClient_serverCommands = {
-            \'typescript': ['typescript-language-server', '--stdio']
-            \}
+function! Layer_AutoComplete()
+    let g:deoplete#enable_at_startup = 1
+    packadd deoplete.nvim
+endfunction
 
-lua <<EOF
-require'nvim-treesitter.configs'.setup {
-  ensure_installed = "maintained", -- one of "all", "maintained" (parsers with maintainers), or a list of languages
-  highlight = {
-    enable = true,              -- false will disable the whole extension
-    disable = { "c", "rust" },  -- list of language that will be disabled
-  },
-}
-EOF
+function! Git()
+    packadd vim-gitgutter
+    packadd vimagit
+endfunction
+
+function! Debugger()
+    packadd vimspector
+endfunction
+
+call Layer_Options()
+call Layer_UI()
+autocmd VimEnter *.ts call Layer_LanguageClient()
+autocmd InsertEnter *.(py|ts) call Layer_AutoComplete() | call Layer_Snippets()
