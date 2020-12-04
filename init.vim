@@ -5,14 +5,14 @@ function! PackagerInit() abort
     call packager#add('kristijanhusak/vim-packager')
 
     call packager#add('nvim-treesitter/nvim-treesitter')
+    call packager#add('sainnhe/sonokai')
     call packager#add('Shougo/deoplete.nvim')
+    call packager#add('autozimu/LanguageClient-neovim', { 'do': 'bash install.sh' })
     call packager#add('sirver/UltiSnips')
     call packager#add('honza/vim-snippets')
-    call packager#add('autozimu/LanguageClient-neovim', { 'do': 'bash install.sh' })
-    call packager#add('puremourning/vimspector')
     call packager#add('airblade/vim-gitgutter')
     call packager#add('jreybert/vimagit')
-    call packager#add('sainnhe/sonokai')
+    call packager#add('puremourning/vimspector')
     call packager#add('itchyny/lightline.vim')
 endfunction
 
@@ -37,6 +37,9 @@ function! Layer_Options()
     set foldmethod=expr
     set foldexpr=nvim_treesitter#foldexpr()
     set hidden
+    set showtabline=2
+    set mouse=a
+    let mapleader=" "
 endfunction
 
 
@@ -47,10 +50,16 @@ function! Layer_UI()
     let g:sonokai_enable_italic = 1
     let g:sonokai_disable_italic_comment = 1
     colorscheme sonokai
-    let g:lightline = {
-        \ 'colorscheme': 'sonokai',
-        \ }
+
+    let g:lightline = {}
+    let g:lightline.colorscheme = 'sonokai'
+    let g:lightline.component = {
+                \ 'mode': '%n',
+                \}
+	let g:lightline.separator = { 'left': "\ue0b0", 'right': "\ue0b2" }
+	let g:lightline.subseparator = { 'left': "\ue0b1", 'right': "\ue0b3" }
     packadd lightline.vim
+
 endfunction
 
 function! Layer_Snippets()
@@ -63,6 +72,35 @@ function! Layer_LanguageClient()
                 \'typescript': ['typescript-language-server', '--stdio']
                 \}
     packadd LanguageClient-neovim
+    " auto highlight matching symbols
+    " auto format on save
+    " auto show help when calling function
+    " auto hover over a word
+    " fuzzy completion for menu
+    " fuzzy completion for symbols
+    " fuzzy completion for actions
+
+    " Calls LanguageClient_contextMenu.
+    " nmap <silent><Leader>lm <Plug>(lcn-menu)
+    " Calls LanguageClient_textDocument_hover.
+    " nmap <silent><Leader>lh <Plug>(lcn-hover)
+    " Calls LanguageClient_textDocument_definition.
+    nmap <silent><Leader>lgd <Plug>(lcn-definition)
+    " Calls LanguageClient_textDocument_typeDefinition.
+    nmap <silent><Leader>ltd <Plug>(lcn-type-definition)
+    " Calls LanguageClient_textDocument_codeAction if called in normal model or LanguageClient_textDocument_visualCodeAction if called in visual mode.
+    " nmap <silent><Leader>la <Plug>(lcn-code-action)
+    " Calls LanguageClient_textDocument_documentSymbol.
+    " nmap <silent><Leader>lt <Plug>(lcn-symbols)
+    " Calls LanguageClient_textDocument_explainErrorAtPoint.
+    nmap <silent><Leader>le <Plug>(lcn-explain-error)
+    " Calls LanguageClient_textDocument_formatting.
+    " nmap <silent><Leader>lf <Plug>(lcn-format)
+    " Calls LanguageClient_diagnosticsNext.
+    nmap <silent>]d <Plug>(lcn-diagnostics-next)
+    " Calls LanguageClient_diagnosticsPrevious.
+    nmap <silent>[d <Plug>(lcn-diagnostics-prev)
+    LanguageClientStart
 endfunction
 
 function! Layer_AutoComplete()
@@ -70,16 +108,24 @@ function! Layer_AutoComplete()
     packadd deoplete.nvim
 endfunction
 
-function! Git()
+function! Layer_Git()
     packadd vim-gitgutter
     packadd vimagit
 endfunction
 
-function! Debugger()
+function! Layer_Debugger()
     packadd vimspector
+endfunction
+
+function! Layer_Term()
+    setlocal nonumber
+    setlocal norelativenumber
+    tnoremap <ESC> <C-\><C-n>
 endfunction
 
 call Layer_Options()
 call Layer_UI()
 autocmd VimEnter *.ts call Layer_LanguageClient()
-autocmd InsertEnter *.(py|ts) call Layer_AutoComplete() | call Layer_Snippets()
+autocmd InsertEnter *.py call Layer_AutoComplete() | call Layer_Snippets()
+autocmd InsertEnter *.ts call Layer_AutoComplete() | call Layer_Snippets()
+autocmd TermOpen * call Layer_Term()
